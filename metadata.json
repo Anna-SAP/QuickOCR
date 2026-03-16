@@ -1,0 +1,5 @@
+{
+  "name": "Quick-OCR",
+  "description": "A minimalist and efficient OCR tool supporting drag-and-drop, clipboard paste, and screen capture.",
+  "requestFramePermissions": ["camera", "microphone", "geolocation"]
+}
