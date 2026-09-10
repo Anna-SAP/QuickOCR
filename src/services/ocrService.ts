@@ -1,7 +1,3 @@
-import { GoogleGenAI, Type } from "@google/genai";
-
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-
 export interface OcrResult {
   text: string;
   language: string;
@@ -10,65 +6,53 @@ export interface OcrResult {
 
 export async function extractTextFromImage(base64Image: string, mimeType: string): Promise<OcrResult> {
   try {
-    const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
-      contents: {
-        parts: [
-          {
-            inlineData: {
-              data: base64Image,
-              mimeType: mimeType,
-            },
-          },
-          {
-            text: "Extract all text from this image. Preserve the original layout and formatting as much as possible. Also detect the primary language of the text.",
-          },
-        ],
+    const res = await fetch("/api/ocr", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
       },
-      config: {
-        responseMimeType: "application/json",
-        responseSchema: {
-          type: Type.OBJECT,
-          properties: {
-            text: {
-              type: Type.STRING,
-              description: "The extracted text. Preserve original layout.",
-            },
-            language: {
-              type: Type.STRING,
-              description: "The detected primary language (e.g., 'English', 'Simplified Chinese', 'Japanese').",
-            },
-            languageCode: {
-              type: Type.STRING,
-              description: "The ISO 639-1 language code (e.g., 'en', 'zh', 'ja').",
-            },
-          },
-          required: ["text", "language", "languageCode"],
-        },
-      },
+      body: JSON.stringify({
+        image: base64Image,
+        mimeType,
+      }),
     });
 
-    if (!response.text) {
-      throw new Error("Empty response from model");
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => ({}));
+      throw new Error(errorData.error || `Server responded with status ${res.status}`);
     }
 
-    const result = JSON.parse(response.text) as OcrResult;
-    return result;
-  } catch (error) {
+    const data: OcrResult = await res.json();
+    return data;
+  } catch (error: any) {
     console.error("Error extracting text:", error);
-    throw new Error("Failed to extract text from image.");
+    throw new Error(error?.message || "Failed to extract text from image.");
   }
 }
 
 export async function translateText(text: string, targetLanguage: string): Promise<string> {
   try {
-    const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
-      contents: `Translate the following text to ${targetLanguage}. Only return the translated text, no other comments or markdown formatting.\n\nText:\n${text}`,
+    const res = await fetch("/api/translate", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        text,
+        targetLanguage,
+      }),
     });
-    return response.text || "";
-  } catch (error) {
+
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => ({}));
+      throw new Error(errorData.error || `Server responded with status ${res.status}`);
+    }
+
+    const data = await res.json();
+    return data.translatedText || "";
+  } catch (error: any) {
     console.error("Error translating text:", error);
-    throw new Error("Failed to translate text.");
+    throw new Error(error?.message || "Failed to translate text.");
   }
 }
+

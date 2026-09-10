@@ -1,5 +1,6 @@
 {
   "name": "Quick-OCR",
   "description": "A minimalist and efficient OCR tool supporting drag-and-drop, clipboard paste, and screen capture.",
-  "requestFramePermissions": ["camera", "microphone", "geolocation"]
+  "requestFramePermissions": ["camera", "microphone", "geolocation"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

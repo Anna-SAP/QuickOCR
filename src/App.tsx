@@ -20,6 +20,7 @@ export default function App() {
   const [isTranslating, setIsTranslating] = useState<boolean>(false);
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const [lastFile, setLastFile] = useState<File | null>(null);
   const [isDragging, setIsDragging] = useState<boolean>(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -61,6 +62,7 @@ export default function App() {
     }
 
     setError(null);
+    setLastFile(file);
     setIsProcessing(true);
     setExtractedText('');
     setDetectedLanguage(null);
@@ -94,8 +96,8 @@ export default function App() {
         languageCode: result.languageCode,
         translatedText: null
       }, ...prev].slice(0, 20)); // Keep last 20 items
-    } catch (err) {
-      setError('识别失败，请重试');
+    } catch (err: any) {
+      setError(err?.message || '识别失败，请重试');
       console.error(err);
     } finally {
       setIsProcessing(false);
@@ -221,8 +223,8 @@ export default function App() {
           item.id === currentHistoryId ? { ...item, translatedText: result } : item
         ));
       }
-    } catch (err) {
-      setError('翻译失败，请重试');
+    } catch (err: any) {
+      setError(err?.message || '翻译失败，请重试');
       console.error(err);
     } finally {
       setIsTranslating(false);
@@ -299,8 +301,19 @@ export default function App() {
             </div>
 
             {error && (
-              <div className="text-red-500 text-sm font-medium text-center bg-red-50 p-3 rounded-lg">
-                {error}
+              <div className="text-red-600 text-sm font-medium bg-red-50 border border-red-200/80 p-3.5 rounded-xl flex items-center justify-between gap-3 shadow-xs">
+                <div className="flex items-center gap-2 text-left flex-1">
+                  <span className="text-red-500 font-bold text-base shrink-0">⚠️</span>
+                  <span className="leading-snug">{error}</span>
+                </div>
+                {lastFile && !isProcessing && (
+                  <button
+                    onClick={() => processImage(lastFile)}
+                    className="shrink-0 px-3 py-1.5 bg-red-100 hover:bg-red-200 text-red-700 font-semibold rounded-lg text-xs transition-colors cursor-pointer"
+                  >
+                    重试
+                  </button>
+                )}
               </div>
             )}
 
